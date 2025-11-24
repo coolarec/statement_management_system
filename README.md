@@ -14,7 +14,7 @@ A modern enterprise-level admin management system built with Django + Vue3 + Ele
 </div>
 
 ## Demo Link
-[Demo Link https://zq.fuadmin.cn](https://zq.fuadmin.cn/)
+[Demo Link https://zq.fuadmin.cn](https://django-ninja.zq-platform.cn/)
 
 ## 📖 Introduction
 
