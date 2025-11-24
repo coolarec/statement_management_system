@@ -1,5 +1,7 @@
+import os
 # dev, uat, prd
-ENV = 'dev'
+ENV = os.environ.get('ZQ_ENV', 'dev')
+
 
 if ENV == 'dev':
     from env.dev_env import *
