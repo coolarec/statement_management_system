@@ -155,17 +155,25 @@ def update_role(request, role_id: str, data: RoleSchemaIn):
             raise HttpError(400, "系统角色不能修改角色编码")
     
     # 更新角色基本信息
+    permission_changed = False
     for attr, value in data.dict().items():
         if attr == "menu":
             role.menu.set(value)
         elif attr == "permission":
             role.permission.set(value)
+            permission_changed = True
         elif attr == "dept":
             role.dept.set(value)
         else:
             setattr(role, attr, value)
     
     role.save()
+    
+    # 如果权限发生变更，清除缓存
+    if permission_changed:
+        from common.fu_cache import PermissionCacheManager
+        PermissionCacheManager.invalidate_role_permissions(str(role_id))
+    
     return role
 
 
@@ -202,17 +210,25 @@ def patch_role(request, role_id: str, data: RoleSchemaPatch):
             raise HttpError(400, "系统角色不能修改角色编码")
     
     # 更新字段
+    permission_changed = False
     for attr, value in update_data.items():
         if attr == "menu":
             role.menu.set(value)
         elif attr == "permission":
             role.permission.set(value)
+            permission_changed = True
         elif attr == "dept":
             role.dept.set(value)
         else:
             setattr(role, attr, value)
     
     role.save()
+    
+    # 如果权限发生变更，清除缓存
+    if permission_changed:
+        from common.fu_cache import PermissionCacheManager
+        PermissionCacheManager.invalidate_role_permissions(str(role_id))
+    
     return role
 
 
@@ -525,6 +541,10 @@ def update_role_permissions(request, role_id: str, data: RolePermissionUpdateIn)
     # 更新权限关联
     role.permission.set(valid_permissions)
     
+    # 清除角色权限缓存
+    from common.fu_cache import PermissionCacheManager
+    PermissionCacheManager.invalidate_role_permissions(str(role_id))
+    
     return response_success(f"成功更新 {len(permission_ids)} 个权限")
 
 
@@ -557,6 +577,10 @@ def update_role_menus_permissions(request, role_id: str, data: RoleMenuPermissio
     # 更新菜单和权限关联
     role.menu.set(valid_menus)
     role.permission.set(valid_permissions)
+    
+    # 清除角色权限缓存
+    from common.fu_cache import PermissionCacheManager
+    PermissionCacheManager.invalidate_role_permissions(str(role_id))
     
     return response_success(f"成功更新 {len(menu_ids)} 个菜单和 {len(permission_ids)} 个权限")
 

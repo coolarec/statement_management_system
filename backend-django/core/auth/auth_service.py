@@ -185,7 +185,7 @@ class AuthService:
             Tuple: (access_token, refresh_token, expire_time)
         """
         jwt_data = {
-            "id": user.pk,
+            "id": str(user.pk),  # 转换 UUID 为字符串
             "username": user.username,
             "email": user.email,
             "name": user.name,

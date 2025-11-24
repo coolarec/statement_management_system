@@ -23,7 +23,7 @@ django.setup()
 django_asgi_app = get_asgi_application()
 
 # 导入WebSocket路由（必须在django.setup()之后）
-from core.websocket import websocket_urlpatterns
+from core.websocket.routing import websocket_urlpatterns
 
 # 配置ASGI应用程序以支持HTTP和WebSocket
 application = ProtocolTypeRouter({

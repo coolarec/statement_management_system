@@ -170,9 +170,11 @@ def update_user(request, user_id: str, data: UserSchemaIn):
         raise HttpError(400, "系统用户不能修改用户类型")
     
     # 更新用户信息
+    role_changed = False
     for attr, value in data.dict().items():
         if attr == "core_roles":
             user.core_roles.set(value)
+            role_changed = True
         elif attr == "post":
             user.post.set(value)
         elif attr == "password":
@@ -183,6 +185,12 @@ def update_user(request, user_id: str, data: UserSchemaIn):
                 setattr(user, attr, value)
     
     user.save()
+    
+    # 如果角色发生变更，清除权限缓存
+    if role_changed:
+        from common.fu_cache import PermissionCacheManager
+        PermissionCacheManager.invalidate_user_permissions(str(user.id))
+    
     return user
 
 
@@ -226,15 +234,23 @@ def patch_user(request, user_id: str, data: UserSchemaPatch):
         raise HttpError(400, "系统用户不能修改用户类型")
     
     # 更新字段
+    role_changed = False
     for attr, value in update_data.items():
         if attr == "core_roles":
             user.core_roles.set(value)
+            role_changed = True
         elif attr == "post":
             user.post.set(value)
         else:
             setattr(user, attr, value)
     
     user.save()
+    
+    # 如果角色发生变更，清除权限缓存
+    if role_changed:
+        from common.fu_cache import PermissionCacheManager
+        PermissionCacheManager.invalidate_user_permissions(str(user.id))
+    
     return user
 
 

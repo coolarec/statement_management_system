@@ -5,7 +5,7 @@ JWT 鉴权和权限校验
 """
 import re
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 
 import jwt
 from django.core.cache import cache
@@ -89,7 +89,7 @@ class TokenBlacklist:
         blacklist = cache.get(key, {})
         
         # 计算剩余有效期
-        remaining_time = exp_time - int(datetime.utcnow().timestamp())
+        remaining_time = exp_time - int(datetime.now(timezone.utc).timestamp())
         if remaining_time > 0:
             blacklist[token] = exp_time
             cache.set(key, blacklist, remaining_time)
@@ -138,15 +138,23 @@ def is_in_white_list(path: str, white_apis: list) -> bool:
                 return True
         else:
             # 通配符匹配
-            parts = api.split('*')
-            if len(parts) == 2:
-                prefix, suffix = parts
-                if path.startswith(prefix) and path.endswith(suffix):
-                    return True
-            elif len(parts) == 1 and api.endswith('*'):
-                prefix = parts[0]
+            if api.endswith('*') and not api.startswith('*'):
+                # 前缀匹配：/api/core/*
+                prefix = api[:-1]
                 if path.startswith(prefix):
                     return True
+            elif api.startswith('*') and not api.endswith('*'):
+                # 后缀匹配：*/login
+                suffix = api[1:]
+                if path.endswith(suffix):
+                    return True
+            elif '*' in api:
+                # 中间通配符：/api/*/user
+                parts = api.split('*')
+                if len(parts) == 2:
+                    prefix, suffix = parts
+                    if path.startswith(prefix) and path.endswith(suffix):
+                        return True
     return False
 
 
@@ -228,8 +236,9 @@ class BearerAuth(HttpBearer):
                 return user
             
             # 6. 检查白名单 API
-            white_apis = API_WHITE_LIST if cache.get('white_apis') is None else [
-                *cache.get('white_apis'), 
+            cached_white_apis = cache.get('white_apis')
+            white_apis = API_WHITE_LIST if cached_white_apis is None else [
+                *cached_white_apis, 
                 *API_WHITE_LIST
             ]
             if is_in_white_list(path, white_apis):
@@ -266,14 +275,16 @@ class BearerAuth(HttpBearer):
             # 获取 HTTP 方法对应的数字
             method_code = HTTP_METHOD_MAP.get(method)
             if method_code is None:
-                logger.warning(f"不支持的 HTTP "
-                               f"方法: {method}")
+                logger.warning(f"不支持的 HTTP 方法: {method}")
                 return False
 
-            # 使用缓存提高性能
-            cache_key = f"user_permission:{user.id}:{normalized_path}:{method}"
+            # 使用缓存提高性能（包含版本号）
+            from common.fu_cache import PermissionCacheManager
+            version_key = PermissionCacheManager.get_cache_version_key(user.id)
+            cache_key = f"user_permission:{user.id}:{version_key}:{normalized_path}:{method}"
             cached_result = cache.get(cache_key)
             if cached_result is not None:
+                logger.debug(f"命中权限缓存: {cache_key}")
                 return cached_result
             
             # 从 Core 模块导入 Permission 模型
@@ -281,9 +292,9 @@ class BearerAuth(HttpBearer):
             
             # 获取用户所有角色的权限
             # user.core_roles 是 ManyToMany 关系
-            role_ids = user.core_roles.filter(status=True).values_list('id', flat=True)
+            role_ids = list(user.core_roles.filter(status=True).values_list('id', flat=True))
 
-            if not role_ids.exists():
+            if not role_ids:
                 logger.debug(f"用户 {user.username} 没有关联任何启用的角色")
                 cache.set(cache_key, False, 300)  # 缓存5分钟
                 return False

@@ -576,7 +576,71 @@ class MenuCacheManager:
 # ===============================================================
 
 class PermissionCacheManager:
-    """权限缓存管理，专门处理权限和用户权限的缓存"""
+    """
+    权限缓存管理，专门处理权限和用户权限的缓存
+    包括权限数据缓存和版本号管理
+    """
+    
+    # 版本号管理相关常量
+    USER_VERSION_KEY = "user_permission_version:{}"
+    ROLE_VERSION_KEY = "role_permission_version:{}"
+    GLOBAL_VERSION_KEY = "global_permission_version"
+    VERSION_EXPIRE_TIME = 86400  # 24小时
+    
+    # ===============================================================
+    # 权限版本号管理（用于即时失效）
+    # ===============================================================
+    
+    @staticmethod
+    def get_user_version(user_id: str) -> int:
+        """
+        获取用户权限版本号
+        
+        :param user_id: 用户ID
+        :return: 版本号
+        """
+        key = PermissionCacheManager.USER_VERSION_KEY.format(user_id)
+        version = cache.get(key, 0)
+        return version
+    
+    @staticmethod
+    def invalidate_user_permissions(user_id: str) -> None:
+        """
+        使用户所有权限缓存失效
+        当用户角色变更时调用
+        
+        :param user_id: 用户ID
+        """
+        key = PermissionCacheManager.USER_VERSION_KEY.format(user_id)
+        current_version = cache.get(key, 0)
+        cache.set(key, current_version + 1, PermissionCacheManager.VERSION_EXPIRE_TIME)
+        logger.info(f"已清除用户 {user_id} 的权限缓存，版本号: {current_version + 1}")
+    
+    @staticmethod
+    def invalidate_global_permissions() -> None:
+        """
+        使所有权限缓存失效
+        当权限规则全局变更时调用
+        """
+        current_version = cache.get(PermissionCacheManager.GLOBAL_VERSION_KEY, 0)
+        cache.set(PermissionCacheManager.GLOBAL_VERSION_KEY, current_version + 1, PermissionCacheManager.VERSION_EXPIRE_TIME)
+        logger.info(f"已清除全局权限缓存，版本号: {current_version + 1}")
+    
+    @staticmethod
+    def get_cache_version_key(user_id: str) -> str:
+        """
+        获取用户的综合版本号（用户版本 + 全局版本）
+        
+        :param user_id: 用户ID
+        :return: 版本号字符串
+        """
+        user_version = PermissionCacheManager.get_user_version(user_id)
+        global_version = cache.get(PermissionCacheManager.GLOBAL_VERSION_KEY, 0)
+        return f"v{user_version}_{global_version}"
+    
+    # ===============================================================
+    # 权限数据缓存
+    # ===============================================================
     
     @staticmethod
     def get_all_permissions():
@@ -646,12 +710,18 @@ class PermissionCacheManager:
     
     @staticmethod
     def invalidate_role_permissions(role_id: str) -> None:
-        """清除特定角色的权限缓存"""
+        """
+        清除特定角色的权限缓存
+        当角色权限变更时调用
+        
+        :param role_id: 角色ID
+        """
+        # 清除角色权限数据缓存
         cache_key = f"{CacheKeyPrefix.PERMISSION}:role:{role_id}"
         CacheManager.delete(cache_key)
         
-        # 同时清除该角色相关用户的权限缓存
-        CacheManager.clear_by_prefix(f"{CacheKeyPrefix.USER_PERMISSION}")
+        # 通过全局版本号使所有用户权限缓存失效
+        PermissionCacheManager.invalidate_global_permissions()
         
         logger.info(f"角色权限缓存已清除: {role_id}")
     
