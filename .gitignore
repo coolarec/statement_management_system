@@ -54,6 +54,8 @@ coverage
 
 
 ./backend-django/venv
+./backend-django/**/__pycache__/
+./backend-django/**/*.pyc
 ./backend-django/.idea/
 ./backend-django/static/
 ./backend-django/.venv/
