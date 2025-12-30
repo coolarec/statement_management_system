@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'channels',  # WebSocket支持
     'core',
     'scheduler',
+    'problem'
 ]
 
 MIDDLEWARE = [

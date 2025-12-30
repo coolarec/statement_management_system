@@ -179,12 +179,10 @@ export async function batchUpdateUserStatusApi(
  * 重置用户密码
  */
 export async function resetUserPasswordApi(
-  userId: string,
-  data: UserPasswordResetInput,
+  userId: string
 ) {
-  return requestClient.post<User>(
-    `/api/core/user/${userId}/reset_password`,
-    data,
+  return requestClient.put<User>(
+    `/api/core/user/reset/password/${userId}`,
   );
 }
 
