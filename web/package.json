@@ -1,5 +1,5 @@
 {
-  "name": "zq-platform",
+  "name": "statement_management_system",
   "version": "5.5.9",
   "private": true,
   "keywords": [
@@ -110,5 +110,8 @@
       "canvas",
       "node-gyp"
     ]
+  },
+  "dependencies": {
+    "md-editor-v3": "^6.3.0"
   }
 }

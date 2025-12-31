@@ -15,6 +15,11 @@ interface UserInfo extends BasicUserInfo {
    * accessToken
    */
   token: string;
+
+  /**
+   * 头像地址
+   */
+  avatar: string;
 }
 
 export type { UserInfo };

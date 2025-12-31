@@ -158,7 +158,7 @@ export async function deleteUserApi(userId: string) {
  */
 export async function batchDeleteUserApi(data: UserBatchDeleteInput) {
   return requestClient.post<{ count: number }>(
-    '/api/core/user/batch_delete',
+    '/api/core/user/batch/delete',
     data,
   );
 }
@@ -170,7 +170,7 @@ export async function batchUpdateUserStatusApi(
   data: UserBatchUpdateStatusInput,
 ) {
   return requestClient.post<{ count: number }>(
-    '/api/core/user/batch_update_status',
+    '/api/core/user/batch/update_status',
     data,
   );
 }
@@ -190,7 +190,7 @@ export async function resetUserPasswordApi(
  * 更新用户个人信息
  */
 export async function updateUserProfileApi(data: UserProfileUpdateInput) {
-  return requestClient.put<User>('/api/core/user/profile', data);
+  return requestClient.put<User>('/api/core/profile', data);
 }
 
 /**
@@ -221,14 +221,14 @@ export async function getSimpleUserListApi() {
  * 获取当前用户个人信息
  */
 export async function getCurrentUserProfileApi() {
-  return requestClient.get<User>('/api/core/user/profile/me');
+  return requestClient.get<User>('/api/core/profile/me');
 }
 
 /**
  * 部分更新用户个人信息
  */
 export async function patchUserProfileApi(data: UserProfileUpdateInput) {
-  return requestClient.patch<User>('/api/core/user/profile', data);
+  return requestClient.patch<User>('/api/core/profile', data);
 }
 
 /**

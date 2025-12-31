@@ -20,7 +20,7 @@ from core.auth.auth_schema import (
 )
 from core.auth.auth_service import AuthService
 from core.user.user_model import User
-
+from core.file_manager.file_manager_model import FileManager
 logger = logging.getLogger(__name__)
 
 router = Router()
@@ -121,6 +121,19 @@ def logout(request):
     return LogoutOut(msg="登出成功")
 
 
+def resolve_file_download_url(request, uuid: str | None):
+    if not uuid:
+        return None
+
+    file = FileManager.objects.filter(id=uuid).first()
+
+    if not file:
+        return None
+    print(file.url)
+    return f"/basic-api/api/core/file_manager/file/download?path={file.url}"
+
+
+
 @router.get("/userinfo", response=UserInfoOut, summary="获取用户信息")
 def get_userinfo(request):
     """
@@ -131,11 +144,14 @@ def get_userinfo(request):
         raise HttpError(message="未授权", status_code=401)
     
     user = get_object_or_404(User, id=user_info.id)
-    
+    print(user.avatar)
+    avatar_url = resolve_file_download_url(request, user.avatar)
+
     return UserInfoOut(
         id=str(user.pk),
         username=user.username,
         realName=user.name,
+        avatar=avatar_url
     )
 
 

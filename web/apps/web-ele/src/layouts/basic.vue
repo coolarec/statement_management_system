@@ -129,12 +129,15 @@ watch(
 
 <template>
   <BasicLayout @clear-preferences-and-logout="handleLogout">
+    <template #logo-text>
+      <span>题目管理系统后台程序</span>
+    </template>
     <template #user-dropdown>
       <UserDropdown
         :avatar
         :menus
         :text="userStore.userInfo?.realName"
-        description="jiangzhikj@outlook.com"
+        description="欢迎来到题目管理系统"
         tag-text="Pro"
         @logout="handleLogout"
       />

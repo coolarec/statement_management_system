@@ -36,7 +36,7 @@ class UserInfoOut(Schema):
     id: str = Field(..., description="用户ID")
     username: str = Field(..., description="用户名")
     realName: str = Field(..., description="真实姓名")
-
+    avatar: Optional[str] = None
 
 class LogoutOut(Schema):
     """登出响应 Schema"""
