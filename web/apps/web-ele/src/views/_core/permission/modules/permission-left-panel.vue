@@ -192,7 +192,7 @@ onMounted(() => {
 
 <template>
   <ElCard
-    style="border: none"
+    style="border: none;height: 100%;"
     class="mr-[10px] flex h-full flex-col"
     shadow="never"
   >

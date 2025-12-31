@@ -47,7 +47,7 @@ function onFormSuccess() {
 
     <div class="flex h-full">
       <!-- 左侧：菜单树 -->
-      <div class="w-1/6">
+      <div class="w-1/6 h-full border-r">
         <PermissionLeftPanel @select="onMenuSelect" />
       </div>
 
